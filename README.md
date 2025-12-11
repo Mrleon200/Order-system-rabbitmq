@@ -1,6 +1,3 @@
-Here’s a professional README you can drop straight into `README.md` in your repo 👇
-
-````markdown
 # Order System with RabbitMQ
 
 A small **event-driven order processing system** built with **Spring Boot**, **RabbitMQ** and an in-memory **H2 database**.  
