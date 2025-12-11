@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Order System (RabbitMQ)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Font hiện đại -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary2: #7c3aed;
+            --bg: #f4f6fb;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --pending: #f59e0b;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --shadow-soft: 0 18px 45px rgba(30, 64, 175, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top left, #eef2ff 0, #f9fafb 40%, #f4f6fb 100%);
+            color: var(--text-main);
+        }
+
+        /* ====== HEADER ĐƠN GIẢN (CHỈ ORDER) ====== */
+        .topbar {
+            max-width: 1200px;
+            margin: 12px auto 0 auto;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--primary), var(--primary2));
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(79,70,229,0.4);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            background: #fff;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 18px;
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+
+        .brand-main {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .brand-sub {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .top-tag {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        /* ====== BỐ CỤC ====== */
+        .page {
+            max-width: 1200px;
+            margin: 20px auto 40px auto;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+            gap: 20px;
+        }
+
+        .page-full {
+            grid-column: 1 / -1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px 20px 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        /* ====== FORM ====== */
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-sub);
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            outline: none;
+            background: #f9fafb;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.22);
+            background: #fff;
+        }
+
+        .primary-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            box-shadow: 0 10px 25px rgba(79,70,229,0.35);
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(79,70,229,0.45);
+        }
+
+        .secondary-btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: var(--text-main);
+            transition: background .12s, border-color .12s;
+        }
+
+        .secondary-btn:hover {
+            background: #f3f4ff;
+            border-color: var(--primary);
+        }
+
+        .result-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            background: #f3f4ff;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            max-height: 190px;
+            overflow: auto;
+        }
+
+        /* ====== KPI ====== */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .kpi-card {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .kpi-value {
+            margin-top: 3px;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* ====== TABLE ====== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        thead {
+            background: #eef2ff;
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        /* ====== BADGE ====== */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-yes {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-no {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-ok { color: var(--success); font-size: 13px; margin-top: 4px; }
+        .status-error { color: var(--danger); font-size: 13px; margin-top: 4px; }
+        .status-pending { color: var(--pending); font-size: 13px; margin-top: 4px; }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 980px) {
+            .page {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                border-radius: 18px;
+            }
+            .page {
+                margin-top: 14px;
+            }
+            .card {
+                padding: 14px 14px 16px 14px;
+            }
+            .kpi-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            th, td {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div class="logo">OS</div>
+        <div>
+            <div class="brand-main">Order System</div>
+            <div class="brand-sub">RabbitMQ background processing demo</div>
+        </div>
+    </div>
+    <div class="top-tag">Orders dashboard</div>
+</header>
+
+<main class="page">
+    <!-- TẠO ĐƠN HÀNG -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Tạo đơn hàng</div>
+                <div class="card-subtitle">Đơn sẽ được xử lý nền qua RabbitMQ</div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="customerName">Họ tên khách hàng <span class="required">*</span></label>
+            <input id="customerName" type="text" placeholder="VD: Hùng">
+        </div>
+
+        <div class="field">
+            <label for="productId">Mã sản phẩm <span class="required">*</span></label>
+            <input id="productId" type="text" placeholder="VD: P001">
+        </div>
+
+        <div class="field">
+            <label for="quantity">Số lượng</label>
+            <input id="quantity" type="number" min="1" value="1">
+        </div>
+
+        <div class="field">
+            <label for="totalPrice">Tổng tiền</label>
+            <input id="totalPrice" type="number" min="0" value="0">
+        </div>
+
+        <button class="primary-btn" onclick="createOrder()">Tạo đơn</button>
+
+        <div id="createOrderResult" class="result-box"></div>
+    </section>
+
+    <!-- THỐNG KÊ -->
+    <section class="card" id="stats">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Thống kê đơn hàng</div>
+                <div class="card-subtitle">Theo trạng thái xử lý nền</div>
+            </div>
+            <button class="secondary-btn" onclick="loadOrderStats()">Tải thống kê</button>
+        </div>
+
+        <details style="margin-bottom: 8px;">
+            <summary style="font-size:13px; cursor:pointer;">Hiện / ẩn JSON thống kê</summary>
+            <div id="statsJson" class="result-box"></div>
+        </details>
+
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Tổng số đơn</div>
+                <div id="totalOrdersValue" class="kpi-value">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Đã xử lý nền xong</div>
+                <div id="processedOrdersValue" class="kpi-value">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Đang chờ xử lý</div>
+                <div id="pendingOrdersValue" class="kpi-value">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Lỗi cập nhật kho</div>
+                <div id="failedOrdersValue" class="kpi-value">0</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRA CỨU TRẠNG THÁI ĐƠN -->
+    <section class="card page-full">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Tra cứu trạng thái đơn hàng</div>
+                <div class="card-subtitle">Nhập ID để xem tiến trình xử lý</div>
+            </div>
+        </div>
+
+        <div class="field" style="max-width: 300px;">
+            <label for="statusOrderId">Order ID</label>
+            <input id="statusOrderId" type="number" min="1" placeholder="VD: 1">
+        </div>
+
+        <button class="secondary-btn" onclick="checkOrderStatus()">Xem trạng thái</button>
+
+        <div id="orderStatusResult" class="result-box" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- DANH SÁCH ĐƠN HÀNG -->
+    <section class="card page-full">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Danh sách đơn hàng</div>
+                <div class="card-subtitle">Trạng thái chi tiết từng bước xử lý</div>
+            </div>
+            <button class="secondary-btn" onclick="loadOrders()">Tải danh sách đơn</button>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Khách</th>
+                <th>SP</th>
+                <th>SL</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Email</th>
+                <th>Kho</th>
+                <th>Log</th>
+                <th>Huỷ</th>
+            </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+            <tr><td colspan="10">Chưa có dữ liệu. Bấm "Tải danh sách đơn".</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+    // ======= Helpers =======
+    function renderBadge(ok) {
+        if (ok === true) {
+            return '<span class="badge badge-yes">OK</span>';
+        }
+        if (ok === false) {
+            return '<span class="badge badge-no">Lỗi</span>';
+        }
+        return '<span class="badge badge-pending">N/A</span>';
+    }
+
+    function computeStatus(order) {
+        const email = !!order.emailSent;
+        const stock = !!order.stockUpdated;
+        const log = !!order.logWritten;
+
+        if (email && stock && log) {
+            return { text: 'Hoàn tất', className: 'badge badge-yes' };
+        }
+        if (email && log && !stock) {
+            return { text: 'Lỗi kho', className: 'badge badge-no' };
+        }
+        return { text: 'Đang xử lý', className: 'badge badge-pending' };
+    }
+
+    // ======= Tạo đơn hàng =======
+    async function createOrder() {
+        const customerNameInput = document.getElementById('customerName');
+        const productIdInput = document.getElementById('productId');
+        const quantityInput = document.getElementById('quantity');
+        const totalPriceInput = document.getElementById('totalPrice');
+        const resultEl = document.getElementById('createOrderResult');
+
+        const customerName = customerNameInput.value.trim();
+        const productId = productIdInput.value.trim();
+        const quantity = parseInt(quantityInput.value, 10);
+        const totalPrice = parseFloat(totalPriceInput.value);
+
+        resultEl.textContent = '';
+
+        if (!customerName) {
+            resultEl.textContent = 'Vui lòng nhập Họ tên khách hàng.';
+            customerNameInput.focus();
+            return;
+        }
+        if (!productId) {
+            resultEl.textContent = 'Vui lòng nhập Mã sản phẩm.';
+            productIdInput.focus();
+            return;
+        }
+        if (!quantity || quantity <= 0) {
+            resultEl.textContent = 'Số lượng phải lớn hơn 0.';
+            quantityInput.focus();
+            return;
+        }
+
+        try {
+            const res = await fetch('/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customerName, productId, quantity, totalPrice })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                resultEl.textContent = 'Lỗi: ' + res.status + ' - ' + text;
+                return;
+            }
+
+            const data = await res.json();
+            resultEl.textContent = JSON.stringify(data, null, 2);
+
+            loadOrders();
+            setTimeout(loadOrderStats, 300);
+        } catch (e) {
+            resultEl.textContent = 'Exception: ' + e;
+        }
+    }
+
+    // ======= Danh sách đơn =======
+    async function loadOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Đang tải...</td></tr>';
+
+        try {
+            const res = await fetch('/orders');
+            if (!res.ok) {
+                tbody.innerHTML =
+                    '<tr><td colspan="10" class="text-center">Lỗi: ' + res.status + '</td></tr>';
+                return;
+            }
+
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="10" class="text-center">Chưa có đơn hàng.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(o => {
+                const tr = document.createElement('tr');
+                const status = computeStatus(o);
+                const khoBadge = o.stockUpdated === false
+                    ? '<span class="badge badge-no">Lỗi</span>'
+                    : renderBadge(o.stockUpdated);
+
+                tr.innerHTML =
+                    '<td>' + o.id + '</td>' +
+                    '<td>' + (o.customerName || '') + '</td>' +
+                    '<td>' + (o.productId || '') + '</td>' +
+                    '<td>' + o.quantity + '</td>' +
+                    '<td>' + o.totalPrice + '</td>' +
+                    '<td><span class="' + status.className + '">' + status.text + '</span></td>' +
+                    '<td>' + renderBadge(o.emailSent) + '</td>' +
+                    '<td>' + khoBadge + '</td>' +
+                    '<td>' + renderBadge(o.logWritten) + '</td>' +
+                    '<td>' +
+                    (o.cancelled
+                        ? '<span class="badge badge-pending">Đã huỷ</span>'
+                        : '<button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(' + o.id + ')">Huỷ</button>'
+                    ) +
+                    '</td>';
+
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            tbody.innerHTML =
+                '<tr><td colspan="10" class="text-center">Exception: ' + e + '</td></tr>';
+        }
+    }
+
+    // ======= Thống kê đơn =======
+    async function loadOrderStats() {
+        const statsJsonEl = document.getElementById('statsJson');
+        const totalEl = document.getElementById('totalOrdersValue');
+        const processedEl = document.getElementById('processedOrdersValue');
+        const pendingEl = document.getElementById('pendingOrdersValue');
+        const failedEl = document.getElementById('failedOrdersValue');
+
+        statsJsonEl.textContent = 'Đang tải...';
+
+        try {
+            const res = await fetch('/orders/stats');
+            if (!res.ok) {
+                const text = await res.text();
+                statsJsonEl.textContent = 'Lỗi: ' + res.status + ' - ' + text;
+                return;
+            }
+
+            const stats = await res.json();
+            statsJsonEl.textContent = JSON.stringify(stats, null, 2);
+
+            totalEl.textContent = stats.totalOrders ?? 0;
+            processedEl.textContent = stats.processedOrders ?? 0;
+            pendingEl.textContent = stats.pendingOrders ?? 0;
+            failedEl.textContent = stats.failedOrders ?? 0;
+        } catch (e) {
+            statsJsonEl.textContent = 'Exception: ' + e;
+        }
+    }
+
+    // ======= Tra cứu trạng thái đơn hàng =======
+    async function checkOrderStatus() {
+        const id = document.getElementById('statusOrderId').value;
+        const resultEl = document.getElementById('orderStatusResult');
+
+        if (!id) {
+            resultEl.textContent = 'Vui lòng nhập ID đơn hàng.';
+            return;
+        }
+
+        try {
+            const res = await fetch('/orders/' + id + '/status');
+            if (!res.ok) {
+                const text = await res.text();
+                resultEl.innerHTML =
+                    '<span class="status-error">Lỗi: ' + res.status + ' - ' + text + '</span>';
+                return;
+            }
+
+            const data = await res.json();
+
+            const status = computeStatus({
+                emailSent: data.emailSent,
+                stockUpdated: data.stockUpdated,
+                logWritten: data.logWritten
+            });
+
+            let html = '';
+            html += '<div><strong>Đơn #' + data.orderId + '</strong> - ' +
+                '<span class="' + status.className + '">' + status.text + '</span></div>';
+
+            if (status.text === 'Hoàn tất') {
+                html += '<div class="status-ok">Đơn hàng đã được xử lý xong.</div>';
+            } else if (status.text === 'Lỗi kho' && data.stockUpdated === false) {
+                html += '<div class="status-error">Nguyên nhân: không cập nhật được kho (có thể do tồn kho không đủ).</div>';
+            } else {
+                html += '<div class="status-pending">Đơn hàng đang được xử lý nền. Vui lòng kiểm tra lại sau.</div>';
+            }
+
+            html += '<div class="mt-2">';
+            html += '<strong>Chi tiết:</strong><br>';
+            html += 'Email: ' + renderBadge(data.emailSent) + '<br>';
+            html += 'Kho: ' + (data.stockUpdated === false
+                ? '<span class="badge badge-no">Lỗi</span>'
+                : renderBadge(data.stockUpdated)) + '<br>';
+            html += 'Log: ' + renderBadge(data.logWritten) + '<br>';
+            html += '</div>';
+
+            resultEl.innerHTML = html;
+        } catch (e) {
+            resultEl.innerHTML = '<span class="status-error">Exception: ' + e + '</span>';
+        }
+    }
+
+    // ======= Huỷ đơn =======
+    async function cancelOrder(id) {
+        if (!confirm('Bạn có chắc muốn huỷ đơn #' + id + ' ?')) return;
+
+        try {
+            const res = await fetch('/orders/' + id + '/cancel', { method: 'POST' });
+            if (!res.ok) {
+                const text = await res.text();
+                alert('Lỗi huỷ đơn: ' + res.status + ' - ' + text);
+                return;
+            }
+            alert('Đã huỷ đơn #' + id);
+            loadOrders();
+            setTimeout(loadOrderStats, 300);
+        } catch (e) {
+            alert('Exception: ' + e);
+        }
+    }
+
+    // Tự load lần đầu
+    window.addEventListener('load', () => {
+        loadOrders();
+        loadOrderStats();
+    });
+
+</script>
+
+</body>
+</html>

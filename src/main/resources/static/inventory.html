@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông tin kho hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Font hiện đại -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary2: #7c3aed;
+            --bg: #f4f6fb;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --pending: #f59e0b;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --shadow-soft: 0 18px 45px rgba(30, 64, 175, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top left, #eef2ff 0, #f9fafb 40%, #f4f6fb 100%);
+            color: var(--text-main);
+        }
+
+        /* ==== HEADER ==== */
+        .topbar {
+            max-width: 1200px;
+            margin: 12px auto 0 auto;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--primary), var(--primary2));
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(79,70,229,0.4);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            background: #fff;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 18px;
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+
+        .brand-main {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .brand-sub {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .top-tag {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        /* ==== LAYOUT ==== */
+        .page {
+            max-width: 1200px;
+            margin: 20px auto 40px auto;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px 20px 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-sub);
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            outline: none;
+            background: #f9fafb;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.22);
+            background: #fff;
+        }
+
+        .primary-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 9px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            box-shadow: 0 10px 25px rgba(79,70,229,0.35);
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(79,70,229,0.45);
+        }
+
+        .secondary-btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: var(--text-main);
+            transition: background .12s, border-color .12s;
+        }
+
+        .secondary-btn:hover {
+            background: #f3f4ff;
+            border-color: var(--primary);
+        }
+
+        .result-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            background: #f3f4ff;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            max-height: 180px;
+            overflow: auto;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* ==== TABLE & CHART LAYOUT ==== */
+        .inventory-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        thead {
+            background: #eef2ff;
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-yes { background: #dcfce7; color: #166534; }
+        .badge-no  { background: #fee2e2; color: #b91c1c; }
+
+        .chart-card {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 14px 16px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #inventoryChart {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 24px;
+            padding: 10px 6px 6px 6px;
+        }
+
+        .chart-caption {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 980px) {
+            .inventory-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                border-radius: 18px;
+            }
+
+            .card {
+                padding: 14px 14px 16px 14px;
+            }
+
+            th, td {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div class="logo">INV</div>
+        <div>
+            <div class="brand-main">Inventory Dashboard</div>
+            <div class="brand-sub">Quản lý tồn kho cho hệ thống đặt hàng</div>
+        </div>
+    </div>
+    <div class="top-tag">Warehouse view</div>
+</header>
+
+<main class="page">
+
+    <!-- THÊM / CẬP NHẬT KHO -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Thêm / cập nhật kho</div>
+                <div class="card-subtitle">
+                    Nếu <strong>productId</strong> đã tồn tại, thao tác <b>Thêm</b> sẽ đặt lại số lượng mới.
+                </div>
+            </div>
+        </div>
+
+        <div class="field" style="max-width: 320px;">
+            <label for="invProductId">Mã sản phẩm (vd: P001)</label>
+            <input id="invProductId" type="text" placeholder="P001">
+        </div>
+
+        <div class="field" style="max-width: 320px;">
+            <label for="invQuantity">Số lượng tồn</label>
+            <input id="invQuantity" type="number" min="0" value="0">
+        </div>
+
+        <button class="primary-btn" onclick="saveInventory()">Thêm</button>
+
+        <details style="margin-top: 10px;">
+            <summary>Kết quả JSON</summary>
+            <div id="inventorySaveResult" class="result-box"></div>
+        </details>
+    </section>
+
+    <!-- DANH SÁCH + BIỂU ĐỒ -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Danh sách kho &amp; biểu đồ</div>
+                <div class="card-subtitle">Theo dõi tồn kho từng sản phẩm</div>
+            </div>
+            <button class="secondary-btn" onclick="loadInventory()">Tải danh sách kho</button>
+        </div>
+
+        <div class="inventory-layout">
+            <!-- BẢNG -->
+            <div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Số lượng tồn</th>
+                        <th>Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                    <tr><td colspan="4">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+
+                <details style="margin-top: 10px;">
+                    <summary>Hiện / ẩn JSON toàn bộ kho</summary>
+                    <div id="inventoryJson" class="result-box"></div>
+                </details>
+            </div>
+
+            <!-- BIỂU ĐỒ -->
+            <div class="chart-card">
+                <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Trạng thái kho</div>
+                <div style="font-size:12px;color:var(--text-sub);">Biểu đồ cột so sánh số lượng tồn</div>
+
+                <!-- Container để JS vẽ cột (div/bar hoặc canvas tuỳ bạn) -->
+                <div id="inventoryChart">
+                    <!-- JS sẽ vẽ các cột vào đây -->
+                </div>
+
+                <div class="chart-caption">
+                    Màu cột: <span style="color:#16a34a;font-weight:600;">xanh</span> = tồn tốt,
+                    <span style="color:#f97316;font-weight:600;">cam</span> = trung bình,
+                    <span style="color:#dc2626;font-weight:600;">đỏ</span> = thấp (so với sản phẩm nhiều nhất).
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    // ====== LOAD DANH SÁCH + VẼ BIỂU ĐỒ ======
+    async function loadInventory() {
+        const tbody = document.getElementById('inventoryTableBody');
+        tbody.innerHTML = '<tr><td colspan="4">Đang tải...</td></tr>';
+
+        try {
+            const res = await fetch('/inventory');
+            if (!res.ok) {
+                tbody.innerHTML = '<tr><td colspan="4">Lỗi: ' + res.status + '</td></tr>';
+                renderInventoryChart([]);
+                return;
+            }
+
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">Chưa có dữ liệu kho.</td></tr>';
+                renderInventoryChart([]);
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(inv => {
+                const tr = document.createElement('tr');
+
+                // Phân loại mức tồn kho theo %:
+                //  >50%: ok, 20–50: low, <20: critical (so với max)
+                // -> tạm thời đánh dấu class, lát nữa dùng max trong chart
+                tr.dataset.qty = inv.quantity;
+
+                tr.innerHTML =
+                    '<td>' + inv.id + '</td>' +
+                    '<td>' + inv.productId + '</td>' +
+                    '<td>' + renderStockCell(inv.quantity) + '</td>' +
+                    '<td>' +
+                        '<button class="secondary" onclick="editInventory('
+                        + inv.id + ', \'' + inv.productId + '\',' + inv.quantity + ')">Sửa</button> ' +
+                        '<button class="secondary" onclick="deleteInventory(' + inv.id + ')">Xoá</button>' +
+                    '</td>';
+                tbody.appendChild(tr);
+            });
+
+            // Gán màu nền theo mức tồn kho, dựa trên max
+            decorateRowsByStock();
+
+            // Vẽ biểu đồ
+            renderInventoryChart(data);
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4">Exception: ' + e + '</td></tr>';
+            renderInventoryChart([]);
+        }
+    }
+
+    function renderStockCell(qty) {
+        let cls = 'stock-ok';
+        let text = qty;
+
+        // class chỉ để màu tag
+        return '<span class="tag-stock ' + cls + '">' + text + '</span>';
+    }
+
+    function decorateRowsByStock() {
+        const rows = Array.from(document.querySelectorAll('#inventoryTableBody tr'));
+        if (rows.length === 0) return;
+
+        const quantities = rows
+            .map(r => parseInt(r.dataset.qty, 10))
+            .filter(q => !isNaN(q));
+        if (quantities.length === 0) return;
+
+        const max = Math.max(...quantities, 1);
+
+        rows.forEach(r => {
+            const q = parseInt(r.dataset.qty, 10) || 0;
+            const pct = (q / max) * 100;
+
+            r.classList.remove('row-low', 'row-critical');
+
+            if (pct === 0) {
+                r.classList.add('row-critical');
+            } else if (pct <= 20) {
+                r.classList.add('row-critical');
+            } else if (pct <= 50) {
+                r.classList.add('row-low');
+            }
+        });
+    }
+
+    // ====== BIỂU ĐỒ CỘT ======
+function renderInventoryChart(items) {
+    const container = document.getElementById('inventoryChart');
+
+    if (!items || items.length === 0) {
+        container.className = 'chart-empty';
+        container.textContent = 'Chưa có dữ liệu kho để hiển thị biểu đồ.';
+        return;
+    }
+
+    const quantities = items.map(i => i.quantity || 0);
+    const maxQty = Math.max(...quantities);
+    if (maxQty === 0) {
+        container.className = 'chart-empty';
+        container.textContent = 'Tất cả sản phẩm đều có số lượng = 0.';
+        return;
+    }
+
+    // nén sqrt để cột không quá chênh lệch
+    const scaledValues = quantities.map(q => Math.sqrt(q));
+    const maxScaled = Math.max(...scaledValues);
+
+    container.className = '';
+    let html = '<div class="chart-columns">';
+
+    items.forEach((inv, idx) => {
+        const qty = quantities[idx];
+        const scaled = scaledValues[idx];
+
+        // chiều cao (%)
+        let percent = Math.round((scaled / maxScaled) * 100);
+        const height = Math.max(percent, 15); // tối thiểu 15%
+
+        // màu theo % lượng gốc
+        const pctOriginal = (qty / maxQty) * 100;
+        let levelClass = 'ok';      // xanh
+        if (pctOriginal <= 20) {
+            levelClass = 'low';     // đỏ
+        } else if (pctOriginal <= 50) {
+            levelClass = 'medium';  // cam
+        }
+
+        html +=
+        '<div class="chart-col">' +
+            '<div class="chart-bar-container">' +
+                '<div class="chart-bar ' + levelClass + '" style="height:' + height + '%">' +
+                    '<span class="chart-bar-value">' + qty + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="chart-col-label">' + inv.productId + '</div>' +
+        '</div>';
+    });
+
+    html += '</div>';
+    html += '<div class="chart-legend">' +
+        'Màu cột: xanh = tồn kho tốt, cam = trung bình, đỏ = thấp (so với sản phẩm nhiều nhất).' +
+        '</div>';
+
+    container.innerHTML = html;
+    }
+
+    // ====== CRUD ======
+    async function createInventory() {
+        const productId = document.getElementById('newProductId').value.trim();
+        const quantity = parseInt(document.getElementById('newQuantity').value, 10);
+        const info = document.getElementById('info');
+
+        if (!productId) {
+            info.textContent = 'Vui lòng nhập mã sản phẩm';
+            return;
+        }
+
+        try {
+            const res = await fetch('/inventory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, quantity })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                info.textContent = 'Lỗi: ' + res.status + ' - ' + text;
+                return;
+            }
+
+            const data = await res.json();
+            info.textContent = 'Đã lưu kho: ' + JSON.stringify(data, null, 2);
+            loadInventory();
+        } catch (e) {
+            info.textContent = 'Exception: ' + e;
+        }
+    }
+
+    async function editInventory(id, currentProductId, currentQuantity) {
+        const newProductId = prompt('Mã sản phẩm mới:', currentProductId);
+        if (newProductId === null) return;
+
+        const qtyStr = prompt('Số lượng mới:', currentQuantity);
+        if (qtyStr === null) return;
+
+        const quantity = parseInt(qtyStr, 10);
+        if (Number.isNaN(quantity) || quantity < 0) {
+            alert('Số lượng không hợp lệ');
+            return;
+        }
+
+        try {
+            const res = await fetch('/inventory/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: newProductId, quantity })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                alert('Lỗi cập nhật: ' + res.status + ' - ' + text);
+                return;
+            }
+
+            loadInventory();
+        } catch (e) {
+            alert('Exception: ' + e);
+        }
+    }
+
+    async function deleteInventory(id) {
+        if (!confirm('Bạn có chắc muốn xoá dòng kho ID = ' + id + ' ?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/inventory/' + id, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok && res.status !== 204) {
+                const text = await res.text();
+                alert('Lỗi xoá: ' + res.status + ' - ' + text);
+                return;
+            }
+
+            loadInventory();
+        } catch (e) {
+            alert('Exception: ' + e);
+        }
+    }
+
+    // load lần đầu
+    window.addEventListener('load', loadInventory);
+
+</script>
+
+</body>
+</html>
